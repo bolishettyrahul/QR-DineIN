@@ -26,7 +26,16 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
+.env.local
 .env*.local
+
+# AI agent / IDE tool folders
+.agent/
+.agents/
+.claude/
+.qwen/
+tmpclaude*
 
 # vercel
 .vercel
@@ -34,3 +43,5 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/src/generated/prisma
