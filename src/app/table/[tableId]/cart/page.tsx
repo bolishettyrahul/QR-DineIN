@@ -82,61 +82,62 @@ export default function CartPage({ params }: { params: { tableId: string } }) {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 pb-32">
+    <div className="min-h-screen bg-[#FCFBFA] pb-32 font-sans text-stone-900 antialiased">
       {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-40">
-        <div className="max-w-lg mx-auto px-5 py-4 flex items-center gap-4 border-b border-stone-100">
-          <Link href={`/table/${params.tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100">
-            ←
-          </Link>
-          <h1 className="text-2xl font-bold text-stone-900 tracking-tight">Your Cart</h1>
-          <span className="text-sm font-medium text-stone-400 bg-stone-100 px-2.5 py-1 rounded-full">{items.length} items</span>
+      <header className="bg-white/90 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between border-b border-stone-100">
+          <div className="flex items-center gap-4">
+            <Link href={`/table/${params.tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100 font-bold active:scale-95">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            </Link>
+            <h1 className="text-2xl font-black tracking-tight">Your Cart</h1>
+          </div>
+          <span className="text-xs font-black tracking-widest uppercase text-stone-500 bg-stone-100 px-3 py-1.5 rounded-full">{items.length} Items</span>
         </div>
       </header>
 
       {/* Cart Items */}
-      <main className="max-w-lg mx-auto px-5 py-6 space-y-4">
+      <main className="max-w-2xl mx-auto px-5 py-8 space-y-5">
         {items.map((item, index) => (
-          <div key={item.menuItemId} className="bg-white rounded-3xl p-5 shadow-sm border border-stone-100 animate-fade-in-up" style={{ animationDelay: `${index * 50}ms` }}>
+          <div key={item.menuItemId} className="bg-white rounded-[24px] p-6 shadow-sm border border-stone-100 animate-fade-in-up hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow" style={{ animationDelay: `${index * 50}ms` }}>
             <div className="flex justify-between items-start mb-4">
               <div className="flex-1 pr-4">
-                <div className="flex items-center gap-2.5 mb-1">
-                  <span className={`w-3 h-3 rounded-[3px] border-2 flex items-center justify-center ${item.isVeg ? 'border-green-500 bg-green-50 text-green-600' : 'border-red-500 bg-red-50 text-red-600'
-                    }`}>
-                    <span className="w-1 h-1 rounded-full bg-current" />
+                <div className="flex items-center gap-3 mb-1">
+                  <span className={`w-4 h-4 rounded-[4px] border-[2px] flex items-center justify-center ${item.isVeg ? 'border-green-500 bg-green-50' : 'border-red-500 bg-red-50'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                   </span>
-                  <h3 className="font-bold text-stone-900 text-[17px] tracking-tight">{item.name}</h3>
+                  <h3 className="font-bold text-[18px] tracking-tight">{item.name}</h3>
                 </div>
-                <p className="text-sm font-medium text-stone-500">{formatCurrency(item.price)} each</p>
+                <p className="text-[15px] font-medium text-stone-500 ml-7">{formatCurrency(item.price)} each</p>
               </div>
               <button
                 onClick={() => removeItem(item.menuItemId)}
                 aria-label="Remove item"
-                className="text-stone-300 hover:text-red-500 hover:bg-red-50 text-sm w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500"
+                className="text-stone-300 hover:text-red-500 hover:bg-red-50 text-sm w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 font-bold active:scale-95"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex items-center justify-between mt-5 mb-4 bg-stone-50/50 p-2 rounded-2xl">
+            <div className="flex items-center justify-between mt-6 mb-4 bg-stone-50/50 p-2 rounded-[16px] border border-stone-100/50">
               <div className="flex items-center gap-1 bg-white rounded-xl shadow-sm border border-stone-100 p-1 pl-2 pr-2">
                 <button
                   aria-label="Decrease quantity"
                   onClick={() => updateQuantity(item.menuItemId, item.quantity - 1)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg text-stone-600 hover:bg-stone-50 hover:text-stone-900 cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 font-medium text-lg"
+                  className="w-10 h-10 flex items-center justify-center rounded-[10px] text-stone-600 hover:bg-stone-50 hover:text-stone-900 cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 font-bold text-xl"
                 >
                   −
                 </button>
-                <span className="font-bold text-stone-900 min-w-[32px] text-center tabular-nums text-lg">{item.quantity}</span>
+                <span className="font-black text-stone-900 min-w-[36px] text-center tabular-nums text-[19px]">{item.quantity}</span>
                 <button
                   aria-label="Increase quantity"
                   onClick={() => updateQuantity(item.menuItemId, item.quantity + 1)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg text-stone-600 hover:bg-stone-50 hover:text-stone-900 cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 font-medium text-lg"
+                  className="w-10 h-10 flex items-center justify-center rounded-[10px] text-stone-600 hover:bg-stone-50 hover:text-stone-900 cursor-pointer active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-500 font-bold text-xl"
                 >
                   +
                 </button>
               </div>
-              <span className="font-bold text-stone-900 text-lg tracking-tight pr-2">
+              <span className="font-black text-[20px] tracking-tight pr-3">
                 {formatCurrency(item.price * item.quantity)}
               </span>
             </div>

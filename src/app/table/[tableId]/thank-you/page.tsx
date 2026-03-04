@@ -41,6 +41,12 @@ export default function ThankYouPage({ params }: { params: { tableId: string } }
           >
             Order More Items
           </Link>
+          <Link
+            href={`/table/${params.tableId}/orders`}
+            className="block w-full py-3 px-6 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+          >
+            📋 View Full Bill
+          </Link>
         </div>
       </div>
     </div>

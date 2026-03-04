@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { initiatePaymentSchema } from '@/lib/validations';
-import { successResponse, validationError, notFound, internalError, conflict } from '@/lib/api-response';
+import { successResponse, validationError, notFound, internalError, conflict, unauthorized } from '@/lib/api-response';
+import { getSessionId } from '@/lib/middleware-helpers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,6 +14,12 @@ export async function POST(request: NextRequest) {
     }
 
     const { orderId, sessionId, method } = parsed.data;
+
+    // Verify the requester owns this session
+    const requestSessionId = getSessionId(request);
+    if (!requestSessionId || requestSessionId !== sessionId) {
+      return unauthorized('Invalid session. Please scan the QR code again.');
+    }
 
     // Validate order
     const order = await prisma.order.findUnique({

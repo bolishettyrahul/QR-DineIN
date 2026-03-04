@@ -6,7 +6,7 @@ import {
   errorResponse, rateLimited
 } from '@/lib/api-response';
 import { checkRateLimit, requireAuth } from '@/lib/middleware-helpers';
-import { sanitizeHtml } from '@/lib/utils';
+import { escapeHtml } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         name: menuItem.name,
         price,
         quantity: item.quantity,
-        notes: item.notes ? sanitizeHtml(item.notes) : null,
+        notes: item.notes ? escapeHtml(item.notes) : null,
       };
     });
 
@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
           sessionId,
           tableId,
           idempotencyKey,
-          specialNotes: specialNotes ? sanitizeHtml(specialNotes) : null,
+          specialNotes: specialNotes ? escapeHtml(specialNotes) : null,
           subtotal,
           taxAmount,
           totalAmount,

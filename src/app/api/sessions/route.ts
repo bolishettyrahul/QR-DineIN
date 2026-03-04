@@ -33,16 +33,29 @@ export async function POST(request: NextRequest) {
       return errorResponse('VALIDATION_ERROR', 'This table is currently disabled.', 400);
     }
 
-    // Check for existing active session
-    const existingSession = await prisma.session.findFirst({
-      where: { tableId, status: 'ACTIVE' },
+    // Attempt to atomically claim the table if it is AVAILABLE
+    const claimedTable = await prisma.table.updateMany({
+      where: { id: tableId, status: 'AVAILABLE', isActive: true },
+      data: { status: 'OCCUPIED' },
     });
 
-    if (existingSession) {
+    // If count === 0, the table was already occupied (or disabled right after our check).
+    // This atomic check eliminates the race condition where concurrent requests could both create sessions.
+    if (claimedTable.count === 0) {
+      // Try to find the existing active session to join it
+      const existingSession = await prisma.session.findFirst({
+        where: { tableId, status: 'ACTIVE' },
+      });
+
+      if (!existingSession) {
+        // Edge case: Table is not available but has no active session (maybe reserved or disabled)
+        return errorResponse('VALIDATION_ERROR', 'Table is currently unavailable.', 400);
+      }
+
       // Return existing session (same party scenario)
       const response = successResponse(existingSession);
       response.cookies.set('session-id', existingSession.id, {
-        httpOnly: false,
+        httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
         maxAge: 4 * 60 * 60,
@@ -51,32 +64,23 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
-    // Create new session with 4-hour expiry
+    // We successfully claimed the table. Now exclusively create the session.
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 4);
 
-    const session = await prisma.$transaction(async (tx) => {
-      // Update table status
-      await tx.table.update({
-        where: { id: tableId },
-        data: { status: 'OCCUPIED' },
-      });
-
-      // Create session
-      return tx.session.create({
-        data: {
-          tableId,
-          guestCount,
-          expiresAt,
-        },
-      });
+    const session = await prisma.session.create({
+      data: {
+        tableId,
+        guestCount,
+        expiresAt,
+      },
     });
 
     const response = successResponse(session, 201);
 
     // Set session cookie
     response.cookies.set('session-id', session.id, {
-      httpOnly: false, // Needs to be readable by frontend for SWR keys
+      httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 4 * 60 * 60, // 4 hours

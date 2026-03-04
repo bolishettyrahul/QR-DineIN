@@ -7,6 +7,7 @@ import { useAuthFetcher, useRealtimeSubscription } from '@/hooks/useRealtime';
 import { ORDER_STATUS_DISPLAY, ORDER_STATUS_FLOW } from '@/lib/utils';
 import { Button } from '@/components/Button';
 import { OrderCardSkeleton } from '@/components/Skeleton';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 
 interface OrderItem {
   id: string;
@@ -25,6 +26,98 @@ interface Order {
   createdAt: string;
   table: { number: number; label: string | null };
   items: OrderItem[];
+}
+
+function KitchenColumn({
+  status,
+  orders,
+  updatingOrder,
+  handleStatusUpdate
+}: {
+  status: string,
+  orders: Order[],
+  updatingOrder: string,
+  handleStatusUpdate: (id: string, newStatus: string) => void
+}) {
+  const [animationParent] = useAutoAnimate();
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-lg font-bold">{ORDER_STATUS_DISPLAY[status]}</h2>
+        <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">
+          {orders.length}
+        </span>
+      </div>
+      <div ref={animationParent} className="space-y-3 min-h-[150px]">
+        {orders.map(order => (
+          <div
+            key={order.id}
+            className={`bg-gray-800 rounded-lg p-4 border-l-4 ${status === 'PLACED' ? 'border-blue-500' :
+                status === 'CONFIRMED' ? 'border-indigo-500' :
+                  status === 'PREPARING' ? 'border-yellow-500' :
+                    'border-green-500'
+              }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-bold text-lg">#{order.orderNumber}</span>
+              <span className="text-sm text-gray-400">
+                Table {order.table.number}
+              </span>
+            </div>
+
+            {/* Time since order */}
+            <p className="text-xs text-gray-500 mb-3">
+              {getTimeSince(order.createdAt)}
+            </p>
+
+            {/* Items */}
+            <div className="space-y-1 mb-3">
+              {order.items.map(item => (
+                <div key={item.id} className="flex justify-between text-sm">
+                  <span>
+                    <span className="text-orange-400 font-medium tabular-nums">{item.quantity}x</span>{' '}
+                    {item.name}
+                  </span>
+                  {item.notes && (
+                    <span className="text-yellow-400 text-xs ml-2">Note: {item.notes}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {order.specialNotes && (
+              <div className="bg-yellow-900/30 text-yellow-300 text-xs rounded p-2 mb-3">
+                Note: {order.specialNotes}
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-2">
+              {ORDER_STATUS_FLOW[order.status]?.filter(s => s !== 'CANCELLED').map(nextStatus => (
+                <Button
+                  key={nextStatus}
+                  size="sm"
+                  variant={nextStatus === 'CANCELLED' ? 'danger' : 'primary'}
+                  loading={updatingOrder === order.id}
+                  onClick={() => handleStatusUpdate(order.id, nextStatus)}
+                  className="flex-1"
+                >
+                  {ORDER_STATUS_DISPLAY[nextStatus] || nextStatus}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {orders.length === 0 && (
+          <div className="text-center text-gray-600 py-8">
+            No orders
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function KitchenDashboard() {
@@ -57,8 +150,8 @@ export default function KitchenDashboard() {
       if (typeof window !== 'undefined' && (payload as { eventType?: string }).eventType === 'INSERT') {
         try {
           const audio = new Audio('/notification.mp3');
-          audio.play().catch(() => {}); // Ignore if no audio file
-        } catch {}
+          audio.play().catch(() => { }); // Ignore if no audio file
+        } catch { }
       }
     }
   );
@@ -134,82 +227,13 @@ export default function KitchenDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {(['PLACED', 'CONFIRMED', 'PREPARING', 'READY'] as const).map(status => (
-              <div key={status}>
-                <div className="flex items-center gap-2 mb-4">
-                  <h2 className="text-lg font-bold">{ORDER_STATUS_DISPLAY[status]}</h2>
-                  <span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded-full">
-                    {groupedOrders[status].length}
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {groupedOrders[status].map(order => (
-                    <div
-                      key={order.id}
-                      className={`bg-gray-800 rounded-lg p-4 border-l-4 ${
-                        status === 'PLACED' ? 'border-blue-500' :
-                        status === 'CONFIRMED' ? 'border-indigo-500' :
-                        status === 'PREPARING' ? 'border-yellow-500' :
-                        'border-green-500'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-bold text-lg">#{order.orderNumber}</span>
-                        <span className="text-sm text-gray-400">
-                          Table {order.table.number}
-                        </span>
-                      </div>
-
-                      {/* Time since order */}
-                      <p className="text-xs text-gray-500 mb-3">
-                        {getTimeSince(order.createdAt)}
-                      </p>
-
-                      {/* Items */}
-                      <div className="space-y-1 mb-3">
-                        {order.items.map(item => (
-                          <div key={item.id} className="flex justify-between text-sm">
-                            <span>
-                              <span className="text-orange-400 font-medium tabular-nums">{item.quantity}x</span>{' '}
-                              {item.name}
-                            </span>
-                            {item.notes && (
-                              <span className="text-yellow-400 text-xs ml-2">Note: {item.notes}</span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {order.specialNotes && (
-                        <div className="bg-yellow-900/30 text-yellow-300 text-xs rounded p-2 mb-3">
-                          Note: {order.specialNotes}
-                        </div>
-                      )}
-
-                      {/* Action buttons */}
-                      <div className="flex gap-2">
-                        {ORDER_STATUS_FLOW[order.status]?.filter(s => s !== 'CANCELLED').map(nextStatus => (
-                          <Button
-                            key={nextStatus}
-                            size="sm"
-                            variant={nextStatus === 'CANCELLED' ? 'danger' : 'primary'}
-                            loading={updatingOrder === order.id}
-                            onClick={() => handleStatusUpdate(order.id, nextStatus)}
-                            className="flex-1"
-                          >
-                            {ORDER_STATUS_DISPLAY[nextStatus] || nextStatus}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-
-                  {groupedOrders[status].length === 0 && (
-                    <div className="text-center text-gray-600 py-8">
-                      No orders
-                    </div>
-                  )}
-                </div>
-              </div>
+              <KitchenColumn
+                key={status}
+                status={status}
+                orders={groupedOrders[status]}
+                updatingOrder={updatingOrder}
+                handleStatusUpdate={handleStatusUpdate}
+              />
             ))}
           </div>
         )}

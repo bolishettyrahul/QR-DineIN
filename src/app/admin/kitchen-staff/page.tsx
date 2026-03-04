@@ -5,6 +5,7 @@ import useSWR, { mutate } from 'swr';
 import { useAuthFetcher } from '@/hooks/useRealtime';
 import { Button } from '@/components/Button';
 import { Skeleton } from '@/components/Skeleton';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface KitchenStaff {
   id: string;
@@ -19,17 +20,19 @@ export default function AdminKitchenStaffPage() {
   const authFetcher = useAuthFetcher();
   const { data, isLoading } = useSWR('/api/admin/kitchen-staff', authFetcher);
   const [showForm, setShowForm] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const staff: KitchenStaff[] = data || [];
 
-  const deactivate = async (id: string) => {
-    if (!confirm('Deactivate this staff member?')) return;
+  const executeDelete = async () => {
+    if (!deleteId) return;
     const token = localStorage.getItem('auth-token');
-    await fetch(`/api/admin/kitchen-staff/${id}`, {
+    await fetch(`/api/admin/kitchen-staff/${deleteId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
     mutate('/api/admin/kitchen-staff');
+    setDeleteId(null);
   };
 
   return (
@@ -60,14 +63,13 @@ export default function AdminKitchenStaffPage() {
                   PIN: {s.pin} · Added {new Date(s.createdAt).toLocaleDateString('en-IN')}
                 </div>
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full font-medium ${
-                s.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-              }`}>
+              <span className={`text-xs px-2 py-1 rounded-full font-medium ${s.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                }`}>
                 {s.isActive ? 'Active' : 'Inactive'}
               </span>
               {s.isActive && (
                 <button
-                  onClick={() => deactivate(s.id)}
+                  onClick={() => setDeleteId(s.id)}
                   className="text-xs px-3 py-1.5 min-h-[36px] bg-red-50 text-red-600 rounded-lg font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
                 >
                   Deactivate
@@ -79,6 +81,15 @@ export default function AdminKitchenStaffPage() {
       )}
 
       {showForm && <StaffFormModal onClose={() => setShowForm(false)} />}
+
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Deactivate Staff"
+        message="Are you sure you want to deactivate this staff member? They will no longer be able to log in to the kitchen displays."
+        confirmText="Deactivate"
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

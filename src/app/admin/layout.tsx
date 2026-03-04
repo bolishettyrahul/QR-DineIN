@@ -37,52 +37,52 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[#FCFBFA] font-sans antialiased text-stone-900 flex">
       {/* Sidebar */}
-      <aside className="hidden md:flex md:w-64 flex-col bg-white border-r border-gray-200">
-        <div className="p-4 border-b">
-          <h1 className="text-xl font-bold text-orange-600">QR-Dine</h1>
-          <p className="text-xs text-gray-500">Restaurant Admin</p>
+      <aside className="hidden md:flex md:w-[260px] flex-col bg-white border-r border-stone-100">
+        <div className="px-6 py-6 border-b border-stone-100">
+          <h1 className="text-[20px] font-black text-stone-900 tracking-tight">QR-Dine</h1>
+          <p className="text-[11px] font-bold text-stone-400 mt-1 uppercase tracking-widest">Restaurant Admin</p>
         </div>
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 px-4 py-6 space-y-1.5">
           {NAV_ITEMS.map(item => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
-                pathname === item.href
-                  ? 'bg-orange-50 text-orange-600'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-[14px] text-[14px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${pathname === item.href
+                ? 'bg-[#ea580c] text-white shadow-[0_4px_15px_rgba(234,88,12,0.25)]'
+                : 'text-stone-500 hover:bg-stone-50 hover:text-stone-900'
+                }`}
             >
-              <span aria-hidden="true">{item.icon}</span>
+              <span aria-hidden="true" className="text-lg opacity-90 w-5 text-center">{item.icon}</span>
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="p-4 border-t">
+        <div className="px-4 py-6 border-t border-stone-100">
           <button
             onClick={handleLogout}
-            className="w-full text-left text-sm text-gray-500 hover:text-red-600 transition-colors px-3 py-2.5 rounded-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+            className="w-full text-left text-[14px] font-bold text-stone-500 hover:text-red-600 hover:bg-red-50 transition-colors px-4 py-3 rounded-[14px] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 flex items-center gap-3"
             aria-label="Logout"
           >
-            ← Logout
+            <span className="w-5 flex items-center justify-center">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            </span> Logout
           </button>
         </div>
       </aside>
 
       {/* Mobile bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-100 md:hidden z-50 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.03)]">
         <div className="flex justify-around py-1">
           {NAV_ITEMS.slice(0, 5).map(item => (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 text-xs py-2 px-3 min-h-[44px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-lg ${
-                pathname === item.href ? 'text-orange-600' : 'text-gray-500'
-              }`}
+              className={`flex flex-col items-center gap-0.5 text-[11px] font-bold py-2.5 px-3 min-h-[44px] justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded-lg transition-colors ${pathname === item.href ? 'text-[#ea580c]' : 'text-stone-400 hover:text-stone-900'
+                }`}
             >
-              <span aria-hidden="true" className="text-lg">{item.icon}</span>
+              <span aria-hidden="true" className="text-xl mb-0.5">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           ))}

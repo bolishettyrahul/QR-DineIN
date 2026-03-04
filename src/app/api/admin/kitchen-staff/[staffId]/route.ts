@@ -1,12 +1,16 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, notFound, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { staffId: string } }
 ) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const staff = await prisma.staff.findUnique({
       where: { id: params.staffId, role: 'KITCHEN' },
     });

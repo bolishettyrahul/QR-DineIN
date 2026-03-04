@@ -86,9 +86,16 @@ export function checkRateLimit(
 // ─── IP Extraction ──────────────────────────────────────────────────────────
 
 export function getClientIP(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    '127.0.0.1'
-  );
+  // In production behind a reverse proxy, use the IP the proxy sets.
+  // Take the first IP from x-forwarded-for (client IP set by the nearest proxy).
+  // Note: In production, configure your reverse proxy to overwrite (not append to)
+  // x-forwarded-for to prevent client spoofing.
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    // Use the first entry (set by the trusted reverse proxy closest to the client)
+    const clientIp = xff.split(',')[0]?.trim();
+    if (clientIp) return clientIp;
+  }
+
+  return request.headers.get('x-real-ip') || request.ip || '127.0.0.1';
 }

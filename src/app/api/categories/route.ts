@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createCategorySchema } from '@/lib/validations';
 import { successResponse, validationError, conflict, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function GET() {
   try {
@@ -22,6 +23,9 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const body = await request.json();
     const parsed = createCategorySchema.safeParse(body);
 

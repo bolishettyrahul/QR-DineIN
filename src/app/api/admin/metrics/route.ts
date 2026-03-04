@@ -1,8 +1,13 @@
+import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

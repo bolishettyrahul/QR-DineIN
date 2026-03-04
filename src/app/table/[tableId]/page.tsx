@@ -11,6 +11,27 @@ export default function TableLandingPage({ params }: { params: { tableId: string
   useEffect(() => {
     async function initSession() {
       try {
+        // Check if we already have a valid session for this table in localStorage
+        const existingData = localStorage.getItem('qr-dine-session');
+        if (existingData) {
+          try {
+            const parsed = JSON.parse(existingData);
+            if (parsed.tableId === params.tableId && parsed.sessionId) {
+              // Verify session is still active via a quick check
+              const checkRes = await fetch(`/api/sessions/${parsed.sessionId}`);
+              const checkData = await checkRes.json();
+              if (checkData.success && checkData.data.status === 'ACTIVE') {
+                router.replace(`/table/${params.tableId}/menu`);
+                return;
+              }
+              // Session expired/invalid — clear and fall through to create new one
+              localStorage.removeItem('qr-dine-session');
+            }
+          } catch {
+            localStorage.removeItem('qr-dine-session');
+          }
+        }
+
         // Create or get existing session
         const res = await fetch('/api/sessions', {
           method: 'POST',

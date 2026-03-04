@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateSessionSchema } from '@/lib/validations';
-import { successResponse, validationError, notFound, internalError } from '@/lib/api-response';
+import { successResponse, validationError, notFound, internalError, errorResponse } from '@/lib/api-response';
 import { requireAuth, getSessionId } from '@/lib/middleware-helpers';
 
 export async function GET(
@@ -35,6 +35,22 @@ export async function GET(
 
     if (!session) {
       return notFound('Session not found');
+    }
+
+    // Enforce expiry if session is past its expiration time
+    if (session.status === 'ACTIVE' && new Date() > session.expiresAt) {
+      await prisma.$transaction(async (tx) => {
+        await tx.session.update({
+          where: { id: params.sessionId },
+          data: { status: 'EXPIRED', completedAt: new Date() },
+        });
+        await tx.table.update({
+          where: { id: session.table.id },
+          data: { status: 'AVAILABLE' },
+        });
+      });
+
+      return errorResponse('SESSION_EXPIRED', 'Session has expired. Please scan the QR code again.', 410);
     }
 
     return successResponse(session);

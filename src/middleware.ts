@@ -36,6 +36,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // CORS: Set headers on all API responses
+  const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || '*';
+
+  // Handle preflight OPTIONS requests
+  if (method === 'OPTIONS') {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-session-id',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
+
   // Check if it's a public route
   const isPublic = PUBLIC_PATTERNS.some(pattern => pattern.test(pathname));
   if (isPublic && method === 'GET') {
@@ -70,7 +87,7 @@ export async function middleware(request: NextRequest) {
 
       // Extract token
       const authHeader = request.headers.get('authorization');
-      const token = authHeader?.startsWith('Bearer ') 
+      const token = authHeader?.startsWith('Bearer ')
         ? authHeader.split(' ')[1]
         : request.cookies.get('auth-token')?.value;
 
