@@ -6,6 +6,7 @@ import { useAuthFetcher } from '@/hooks/useRealtime';
 import { Button } from '@/components/Button';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Skeleton } from '@/components/Skeleton';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface Table {
   id: string;
@@ -22,17 +23,19 @@ export default function AdminTablesPage() {
   const [editTable, setEditTable] = useState<Table | null>(null);
   const [qrTableId, setQrTableId] = useState<string | null>(null);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const tables: Table[] = data || [];
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this table?')) return;
+  const executeDelete = async () => {
+    if (!deleteId) return;
     const token = localStorage.getItem('auth-token');
-    await fetch(`/api/tables/${id}`, {
+    await fetch(`/api/tables/${deleteId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
     mutate('/api/tables');
+    setDeleteId(null);
   };
 
   const showQR = async (tableId: string) => {
@@ -45,6 +48,35 @@ export default function AdminTablesPage() {
       setQrSvg(d.data.qrCodeDataUrl);
       setQrTableId(tableId);
     }
+  };
+
+  const downloadQR = () => {
+    if (!qrSvg || !qrTableId) return;
+    const tableNumber = tables.find(t => t.id === qrTableId)?.number || qrTableId;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const img = new window.Image();
+    img.onload = () => {
+      const padding = 64;
+      ctx.drawImage(img, padding, padding, canvas.width - padding * 2, canvas.height - padding * 2);
+
+      const pngUrl = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = pngUrl;
+      a.download = `Table_${tableNumber}_QR.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    };
+    img.src = qrSvg;
   };
 
   return (
@@ -96,7 +128,7 @@ export default function AdminTablesPage() {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(table.id)}
+                  onClick={() => setDeleteId(table.id)}
                   aria-label={`Delete table ${table.number}`}
                   className="text-xs px-2 py-1.5 min-h-[36px] bg-red-50 text-red-600 rounded-lg font-medium cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-1"
                 >
@@ -122,10 +154,15 @@ export default function AdminTablesPage() {
               height={256}
               className="inline-block bg-white p-4 rounded-lg w-64 h-64"
             />
-            <p className="text-xs text-gray-400 mt-3 mb-4">Scan to start ordering</p>
-            <Button variant="secondary" onClick={() => { setQrTableId(null); setQrSvg(null); }}>
-              Close
-            </Button>
+            <p className="text-xs text-gray-400 mt-3 mb-5">Scan to start ordering</p>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => { setQrTableId(null); setQrSvg(null); }} className="flex-1 !rounded-[12px]">
+                Close
+              </Button>
+              <Button onClick={downloadQR} className="flex-1 !rounded-[12px] !bg-[#ea580c] hover:brightness-110 text-white font-bold">
+                Download PNG
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -137,6 +174,16 @@ export default function AdminTablesPage() {
           onClose={() => { setShowForm(false); setEditTable(null); }}
         />
       )}
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        isOpen={!!deleteId}
+        title="Delete Table"
+        message="Are you sure you want to delete this table? This action will permanently remove it and all associated QR sessions."
+        confirmText="Delete Table"
+        onConfirm={executeDelete}
+        onCancel={() => setDeleteId(null)}
+      />
     </div>
   );
 }

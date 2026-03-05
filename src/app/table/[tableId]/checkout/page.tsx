@@ -64,23 +64,9 @@ export default function CheckoutPage({ params }: { params: { tableId: string } }
         return;
       }
 
-      // For UPI — in a real app, redirect to payment gateway
-      // For demo, simulate successful payment
-      const verifyRes = await fetch('/api/payments/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          paymentId: data.data.id,
-          transactionId: `UPI-${Date.now()}`,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (verifyData.success) {
-        router.push(`/table/${params.tableId}/thank-you?orderId=${orderId}&method=UPI`);
-      } else {
-        setError('Payment verification failed. Please try again.');
-      }
+      // For UPI — redirect to thank you page with pending status
+      // In production, the payment gateway webhook will call /api/payments/verify
+      router.push(`/table/${params.tableId}/thank-you?orderId=${orderId}&method=UPI`);
     } catch {
       setError('Unable to process payment. Please try again.');
     } finally {
@@ -140,11 +126,10 @@ export default function CheckoutPage({ params }: { params: { tableId: string } }
                 role="radio"
                 aria-checked={selectedMethod === method.value}
                 onClick={() => setSelectedMethod(method.value)}
-                className={`w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
-                  selectedMethod === method.value
+                className={`w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-colors text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${selectedMethod === method.value
                     ? 'border-orange-600 bg-orange-50'
                     : 'border-gray-200 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 <div>
                   <p className="font-medium text-gray-900">{method.label}</p>

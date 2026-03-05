@@ -1,13 +1,24 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateSessionSchema } from '@/lib/validations';
-import { successResponse, validationError, notFound, internalError } from '@/lib/api-response';
+import { successResponse, validationError, notFound, internalError, errorResponse } from '@/lib/api-response';
+import { requireAuth, getSessionId } from '@/lib/middleware-helpers';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { sessionId: string } }
+
 ) {
   try {
+    // Allow access if the requester owns this session (cookie) or is authenticated staff
+    const requestSessionId = getSessionId(request);
+    const isOwner = requestSessionId === params.sessionId;
+
+    if (!isOwner) {
+      const { error } = await requireAuth(request, ['ADMIN', 'KITCHEN']);
+      if (error) return error;
+    }
+
     const session = await prisma.session.findUnique({
       where: { id: params.sessionId },
       include: {
@@ -26,6 +37,22 @@ export async function GET(
       return notFound('Session not found');
     }
 
+    // Enforce expiry if session is past its expiration time
+    if (session.status === 'ACTIVE' && new Date() > session.expiresAt) {
+      await prisma.$transaction(async (tx) => {
+        await tx.session.update({
+          where: { id: params.sessionId },
+          data: { status: 'EXPIRED', completedAt: new Date() },
+        });
+        await tx.table.update({
+          where: { id: session.table.id },
+          data: { status: 'AVAILABLE' },
+        });
+      });
+
+      return errorResponse('SESSION_EXPIRED', 'Session has expired. Please scan the QR code again.', 410);
+    }
+
     return successResponse(session);
   } catch (error) {
     console.error('Get session error:', error);
@@ -38,6 +65,10 @@ export async function PATCH(
   { params }: { params: { sessionId: string } }
 ) {
   try {
+    // Only admin can update sessions (close, expire, cancel)
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const body = await request.json();
     const parsed = updateSessionSchema.safeParse(body);
 

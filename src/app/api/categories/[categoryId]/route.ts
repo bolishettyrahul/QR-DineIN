@@ -2,12 +2,16 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateCategorySchema } from '@/lib/validations';
 import { successResponse, validationError, notFound, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { categoryId: string } }
 ) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const body = await request.json();
     const parsed = updateCategorySchema.safeParse(body);
 

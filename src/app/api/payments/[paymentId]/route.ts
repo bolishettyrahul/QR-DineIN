@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
-import { successResponse, notFound, internalError } from '@/lib/api-response';
+import { successResponse, notFound, internalError, unauthorized } from '@/lib/api-response';
+import { getSessionId, getStaffFromRequest } from '@/lib/middleware-helpers';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { paymentId: string } }
 ) {
   try {
@@ -18,6 +19,13 @@ export async function GET(
 
     if (!payment) {
       return notFound('Payment not found');
+    }
+
+    // Allow access if session owner or authenticated staff
+    const requestSessionId = getSessionId(request);
+    const staff = await getStaffFromRequest(request);
+    if (!staff && (!requestSessionId || requestSessionId !== payment.sessionId)) {
+      return unauthorized('Access denied');
     }
 
     return successResponse(payment);

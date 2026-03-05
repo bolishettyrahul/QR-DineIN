@@ -14,7 +14,7 @@ export async function getStaffFromRequest(
     if (!token) return null;
     return verifyToken(token);
   }
-  
+
   const token = authHeader.split(' ')[1];
   return verifyToken(token);
 }
@@ -24,15 +24,15 @@ export async function requireAuth(
   allowedRoles?: ('ADMIN' | 'KITCHEN')[]
 ) {
   const staff = await getStaffFromRequest(request);
-  
+
   if (!staff) {
     return { error: unauthorized(), staff: null };
   }
-  
+
   if (allowedRoles && !allowedRoles.includes(staff.role)) {
     return { error: forbidden(), staff: null };
   }
-  
+
   return { error: null, staff };
 }
 
@@ -42,13 +42,14 @@ export function getSessionId(request: NextRequest): string | null {
   // Check header first, then cookie
   const sessionId = request.headers.get('x-session-id');
   if (sessionId) return sessionId;
-  
+
   return request.cookies.get('session-id')?.value || null;
 }
 
 // ─── Rate Limiting (Simple in-memory) ──────────────────────────────────────
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+let lastCleanup = Date.now();
 
 export function checkRateLimit(
   key: string,
@@ -56,37 +57,45 @@ export function checkRateLimit(
   windowMs: number
 ): boolean {
   const now = Date.now();
+
+  // On-demand cleanup instead of setInterval (serverless-safe)
+  if (now - lastCleanup > 60000) {
+    lastCleanup = now;
+    rateLimitMap.forEach((entry, k) => {
+      if (now > entry.resetAt) {
+        rateLimitMap.delete(k);
+      }
+    });
+  }
+
   const entry = rateLimitMap.get(key);
-  
+
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(key, { count: 1, resetAt: now + windowMs });
     return true;
   }
-  
+
   if (entry.count >= maxRequests) {
     return false;
   }
-  
+
   entry.count++;
   return true;
 }
 
-// Periodically clean up expired entries
-setInterval(() => {
-  const now = Date.now();
-  rateLimitMap.forEach((entry, key) => {
-    if (now > entry.resetAt) {
-      rateLimitMap.delete(key);
-    }
-  });
-}, 60000);
-
 // ─── IP Extraction ──────────────────────────────────────────────────────────
 
 export function getClientIP(request: NextRequest): string {
-  return (
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    '127.0.0.1'
-  );
+  // In production behind a reverse proxy, use the IP the proxy sets.
+  // Take the first IP from x-forwarded-for (client IP set by the nearest proxy).
+  // Note: In production, configure your reverse proxy to overwrite (not append to)
+  // x-forwarded-for to prevent client spoofing.
+  const xff = request.headers.get('x-forwarded-for');
+  if (xff) {
+    // Use the first entry (set by the trusted reverse proxy closest to the client)
+    const clientIp = xff.split(',')[0]?.trim();
+    if (clientIp) return clientIp;
+  }
+
+  return request.headers.get('x-real-ip') || request.ip || '127.0.0.1';
 }

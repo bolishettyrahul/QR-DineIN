@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { updateMenuItemSchema } from '@/lib/validations';
 import { successResponse, validationError, notFound, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function GET(
   _request: NextRequest,
@@ -31,6 +32,9 @@ export async function PATCH(
   { params }: { params: { itemId: string } }
 ) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const body = await request.json();
     const parsed = updateMenuItemSchema.safeParse(body);
 
@@ -62,10 +66,13 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { itemId: string } }
 ) {
   try {
+    const { error: authError } = await requireAuth(request, ['ADMIN']);
+    if (authError) return authError;
+
     const item = await prisma.menuItem.findUnique({
       where: { id: params.itemId },
     });

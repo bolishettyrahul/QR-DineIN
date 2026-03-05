@@ -76,11 +76,10 @@ export default function KitchenLoginPage() {
           {[0, 1, 2, 3].map(i => (
             <div
               key={i}
-              className={`w-14 h-14 rounded-lg border-2 flex items-center justify-center text-2xl font-bold ${
-                pin.length > i
+              className={`w-14 h-14 rounded-lg border-2 flex items-center justify-center text-2xl font-bold ${pin.length > i
                   ? 'border-orange-500 bg-orange-500/20 text-white'
                   : 'border-gray-600 bg-gray-800 text-gray-600'
-              }`}
+                }`}
             >
               {pin.length > i ? '●' : ''}
             </div>
@@ -103,7 +102,7 @@ export default function KitchenLoginPage() {
                   aria-label="Backspace"
                   className="h-14 min-w-[44px] rounded-lg bg-gray-700 text-white text-xl font-medium hover:bg-gray-600 transition-colors active:bg-gray-500 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
                 >
-                  ←
+                  <svg className="w-6 h-6 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" /></svg>
                 </button>
               );
             }

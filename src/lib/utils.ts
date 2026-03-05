@@ -1,5 +1,7 @@
-// Sanitize HTML from user input to prevent XSS
-export function sanitizeHtml(input: string): string {
+// Escape HTML entities in user input (for server-side HTML string interpolation).
+// Note: React auto-escapes JSX output, so this is only needed when building
+// raw HTML strings (e.g., emails, PDF templates). For rich text, use DOMPurify.
+export function escapeHtml(input: string): string {
   return input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -18,9 +20,9 @@ export function formatCurrency(amount: number, currency = 'INR'): string {
   }).format(amount);
 }
 
-// Generate a unique idempotency key
+// Generate a unique idempotency key (cryptographically secure)
 export function generateIdempotencyKey(): string {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
+  return crypto.randomUUID();
 }
 
 // Order status display mapping

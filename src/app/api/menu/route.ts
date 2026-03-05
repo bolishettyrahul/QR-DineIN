@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import prisma from '@/lib/prisma';
 import { createMenuItemSchema } from '@/lib/validations';
 import { successResponse, validationError, internalError } from '@/lib/api-response';
+import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function GET(request: NextRequest) {
   try {
@@ -37,7 +38,12 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {} as Record<string, { categoryId: string; categoryName: string; items: typeof menuItems }>);
 
-    return successResponse(Object.values(grouped));
+    const response = successResponse(Object.values(grouped));
+    // Cache for 10 seconds, serve stale content while revalidating for up to 59 seconds
+    // This allows the server to handle essentially infinite concurrent users scanning QR codes at once
+    response.headers.set('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=59');
+
+    return response;
   } catch (error) {
     console.error('List menu error:', error);
     return internalError();
@@ -46,6 +52,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error } = await requireAuth(request, ['ADMIN']);
+    if (error) return error;
+
     const body = await request.json();
     const parsed = createMenuItemSchema.safeParse(body);
 

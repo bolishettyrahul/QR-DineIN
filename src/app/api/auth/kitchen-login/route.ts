@@ -22,32 +22,32 @@ export async function POST(request: NextRequest) {
 
     const { pin } = parsed.data;
 
-    // Fetch all active kitchen staff and compare PIN with bcrypt
+    // Fetch all active kitchen staff and compare PIN hashes
     const kitchenStaff = await prisma.staff.findMany({
       where: { role: 'KITCHEN', isActive: true },
     });
 
-    let staff = null;
+    let matchedStaff = null;
     for (const s of kitchenStaff) {
       if (s.pin && await bcrypt.compare(pin, s.pin)) {
-        staff = s;
+        matchedStaff = s;
         break;
       }
     }
 
-    if (!staff) {
+    if (!matchedStaff) {
       return unauthorized('Invalid PIN');
     }
 
     const token = await signToken({
-      staffId: staff.id,
+      staffId: matchedStaff.id,
       role: 'KITCHEN',
-      name: staff.name,
+      name: matchedStaff.name,
     });
 
     const response = successResponse({
       token,
-      staff: { id: staff.id, name: staff.name, role: staff.role },
+      staff: { id: matchedStaff.id, name: matchedStaff.name, role: matchedStaff.role },
     });
 
     response.cookies.set('auth-token', token, {
