@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 import { kitchenLoginSchema } from '@/lib/validations';
@@ -21,9 +22,18 @@ export async function POST(request: NextRequest) {
 
     const { pin } = parsed.data;
 
-    const staff = await prisma.staff.findFirst({
-      where: { pin, role: 'KITCHEN', isActive: true },
+    // Fetch all active kitchen staff and compare PIN with bcrypt
+    const kitchenStaff = await prisma.staff.findMany({
+      where: { role: 'KITCHEN', isActive: true },
     });
+
+    let staff = null;
+    for (const s of kitchenStaff) {
+      if (s.pin && await bcrypt.compare(pin, s.pin)) {
+        staff = s;
+        break;
+      }
+    }
 
     if (!staff) {
       return unauthorized('Invalid PIN');

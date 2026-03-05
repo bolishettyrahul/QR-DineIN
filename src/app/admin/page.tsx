@@ -7,13 +7,20 @@ import { Skeleton } from '@/components/Skeleton';
 
 export default function AdminDashboard() {
   const authFetcher = useAuthFetcher();
-  const { data: metrics, isLoading } = useSWR('/api/admin/metrics', authFetcher, {
+  const { data: metrics, error, isLoading } = useSWR('/api/admin/metrics', authFetcher, {
     refreshInterval: 30000,
   });
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+      {error && (
+        <div className="bg-red-50 rounded-xl p-4 mb-6 text-center">
+          <p className="text-red-700 font-medium">Failed to load dashboard data</p>
+          <p className="text-red-500 text-sm mt-1">{error.message}</p>
+        </div>
+      )}
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

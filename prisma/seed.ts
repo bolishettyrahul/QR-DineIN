@@ -36,10 +36,11 @@ async function main() {
   console.log(`✅ Admin: ${admin.email} / admin123`);
 
   // Create kitchen staff
+  const hashedPin = await bcrypt.hash('1234', 10);
   const kitchenStaff = await prisma.staff.create({
     data: {
       name: 'Kitchen 1',
-      pin: '1234',
+      pin: hashedPin,
       role: 'KITCHEN',
     },
   });
@@ -110,6 +111,7 @@ async function main() {
       prisma.menuItem.create({
         data: {
           ...item,
+          restaurantId: restaurant.id,
           isAvailable: true,
         },
       })

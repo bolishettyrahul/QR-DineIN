@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 
@@ -16,18 +16,55 @@ const NAV_ITEMS = [
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthed, setIsAuthed] = useState(false);
 
   useEffect(() => {
-    if (pathname === '/admin/login') return;
+    if (pathname === '/admin/login') {
+      setAuthChecked(true);
+      return;
+    }
     const token = localStorage.getItem('auth-token');
     if (!token) {
-      router.push('/admin/login');
+      router.replace('/admin/login');
+      return;
     }
+    // Validate token with the server
+    fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(res => {
+        if (!res.ok) {
+          localStorage.removeItem('auth-token');
+          document.cookie = 'auth-token=; path=/; max-age=0';
+          router.replace('/admin/login');
+          return;
+        }
+        setIsAuthed(true);
+        setAuthChecked(true);
+      })
+      .catch(() => {
+        // Network error — still allow if token exists (offline support)
+        setIsAuthed(true);
+        setAuthChecked(true);
+      });
   }, [pathname, router]);
 
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
     return <>{children}</>;
+  }
+
+  // Show loading while checking auth
+  if (!authChecked || !isAuthed) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin motion-reduce:animate-none rounded-full h-10 w-10 border-4 border-orange-600 border-t-transparent mx-auto mb-3" />
+          <p className="text-gray-500 text-sm">Verifying access…</p>
+        </div>
+      </div>
+    );
   }
 
   const handleLogout = () => {

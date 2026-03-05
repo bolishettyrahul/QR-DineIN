@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { createKitchenStaffSchema } from '@/lib/validations';
 import { successResponse, validationError, conflict, internalError } from '@/lib/api-response';
@@ -10,14 +11,16 @@ export async function GET() {
       select: {
         id: true,
         name: true,
-        pin: true,
+        pin: false,
         isActive: true,
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return successResponse(staff);
+    // Don't expose hashed PINs — return masked value
+    const safeStaff = staff.map(s => ({ ...s, pin: '****' }));
+    return successResponse(safeStaff);
   } catch (error) {
     console.error('List kitchen staff error:', error);
     return internalError();
@@ -33,19 +36,24 @@ export async function POST(request: NextRequest) {
       return validationError('Invalid input', parsed.error.issues);
     }
 
-    // Check if PIN already used
-    const existingPin = await prisma.staff.findFirst({
-      where: { pin: parsed.data.pin, role: 'KITCHEN', isActive: true },
+    // Check if PIN already used (compare hashed PINs)
+    const existingStaff = await prisma.staff.findMany({
+      where: { role: 'KITCHEN', isActive: true },
     });
 
-    if (existingPin) {
-      return conflict('This PIN is already in use');
+    for (const s of existingStaff) {
+      if (s.pin && await bcrypt.compare(parsed.data.pin, s.pin)) {
+        return conflict('This PIN is already in use');
+      }
     }
+
+    // Hash the PIN before storing
+    const hashedPin = await bcrypt.hash(parsed.data.pin, 10);
 
     const staff = await prisma.staff.create({
       data: {
         name: parsed.data.name,
-        pin: parsed.data.pin,
+        pin: hashedPin,
         role: 'KITCHEN',
       },
       select: {

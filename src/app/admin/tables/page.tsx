@@ -17,7 +17,7 @@ interface Table {
 
 export default function AdminTablesPage() {
   const authFetcher = useAuthFetcher();
-  const { data, isLoading } = useSWR('/api/tables', authFetcher);
+  const { data, error, isLoading } = useSWR('/api/tables', authFetcher);
   const [showForm, setShowForm] = useState(false);
   const [editTable, setEditTable] = useState<Table | null>(null);
   const [qrTableId, setQrTableId] = useState<string | null>(null);
@@ -59,6 +59,16 @@ export default function AdminTablesPage() {
           {[1, 2, 3, 4, 5, 6].map(i => (
             <Skeleton key={i} className="h-36 w-full rounded-xl" />
           ))}
+        </div>
+      ) : error ? (
+        <div className="bg-red-50 rounded-xl p-8 text-center">
+          <p className="text-red-700 font-medium mb-2">Failed to load tables</p>
+          <p className="text-red-500 text-sm mb-4">{error.message}</p>
+          <Button variant="secondary" onClick={() => mutate('/api/tables')}>Retry</Button>
+        </div>
+      ) : tables.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm p-12 text-center text-gray-400">
+          No tables yet. Add one to get started.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
