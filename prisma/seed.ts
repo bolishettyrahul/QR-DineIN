@@ -25,7 +25,25 @@ async function main() {
   // Check if restaurant already exists
   const existingRestaurant = await prisma.restaurant.findFirst();
   if (existingRestaurant) {
-    console.log('Database already seeded. Skipping...');
+    console.log('Database already seeded. Updating credentials...');
+
+    // Update admin password
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    const adminStaff = await prisma.staff.findFirst({ where: { role: 'ADMIN', email: adminEmail } });
+    if (adminStaff) {
+      await prisma.staff.update({ where: { id: adminStaff.id }, data: { passwordHash: hashedPassword } });
+      console.log(`✅ Admin password updated for ${adminEmail}`);
+    }
+
+    // Update kitchen staff PIN
+    const hashedPin = await bcrypt.hash(kitchenPin, 10);
+    const kitchenStaff = await prisma.staff.findMany({ where: { role: 'KITCHEN' } });
+    for (const staff of kitchenStaff) {
+      await prisma.staff.update({ where: { id: staff.id }, data: { pin: hashedPin } });
+      console.log(`✅ Kitchen PIN updated for ${staff.name}`);
+    }
+
+    console.log('\n🎉 Credentials updated!');
     return;
   }
 
@@ -135,8 +153,8 @@ async function main() {
 
   console.log('\n🎉 Seed complete!');
   console.log('---');
-  console.log('Admin login: admin@qrdine.com / admin123');
-  console.log('Kitchen PIN: 1234');
+  console.log(`Admin login: ${adminEmail} / [SEED_ADMIN_PASSWORD]`);
+  console.log('Kitchen PIN: [SEED_KITCHEN_PIN]');
   console.log(`Tables: 1–${tables.length}`);
 }
 
