@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function TableLandingPage({ params }: { params: { tableId: string } }) {
+export default function TableLandingPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const router = useRouter();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -16,7 +17,7 @@ export default function TableLandingPage({ params }: { params: { tableId: string
         if (existingData) {
           try {
             const parsed = JSON.parse(existingData);
-            if (parsed.tableId === params.tableId && parsed.sessionId) {
+            if (parsed.tableId === tableId && parsed.sessionId) {
               // Verify session is still active via a quick check
               const checkRes = await fetch(`/api/sessions/${parsed.sessionId}`);
               if (!checkRes.ok) {
@@ -25,7 +26,7 @@ export default function TableLandingPage({ params }: { params: { tableId: string
               }
               const checkData = await checkRes.json();
               if (checkData.success && checkData.data.status === 'ACTIVE') {
-                router.replace(`/table/${params.tableId}/menu`);
+                router.replace(`/table/${tableId}/menu`);
                 return;
               }
               // Session expired/invalid — clear and fall through to create new one
@@ -40,7 +41,7 @@ export default function TableLandingPage({ params }: { params: { tableId: string
         const res = await fetch('/api/sessions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tableId: params.tableId }),
+          body: JSON.stringify({ tableId: tableId }),
         });
 
         const data = await res.json();
@@ -54,11 +55,11 @@ export default function TableLandingPage({ params }: { params: { tableId: string
         // Store session info in localStorage
         localStorage.setItem('qr-dine-session', JSON.stringify({
           sessionId: data.data.id,
-          tableId: params.tableId,
+          tableId: tableId,
         }));
 
         // Redirect to menu
-        router.replace(`/table/${params.tableId}/menu`);
+        router.replace(`/table/${tableId}/menu`);
       } catch {
         setError('Unable to connect. Please check your internet connection.');
         setLoading(false);
@@ -66,7 +67,7 @@ export default function TableLandingPage({ params }: { params: { tableId: string
     }
 
     initSession();
-  }, [params.tableId, router]);
+  }, [tableId, router]);
 
   if (loading) {
     return (

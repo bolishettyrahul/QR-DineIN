@@ -1,10 +1,12 @@
 'use client';
 
+import { use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { PAYMENT_METHOD_DISPLAY } from '@/lib/utils';
 
-export default function ThankYouPage({ params }: { params: { tableId: string } }) {
+export default function ThankYouPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const searchParams = useSearchParams();
   const method = searchParams.get('method') || '';
   const orderId = searchParams.get('orderId') || '';
@@ -29,20 +31,20 @@ export default function ThankYouPage({ params }: { params: { tableId: string } }
         <div className="space-y-3">
           {orderId && (
             <Link
-              href={`/table/${params.tableId}/order-status?orderId=${orderId}`}
+              href={`/table/${tableId}/order-status?orderId=${orderId}`}
               className="block w-full py-3 px-6 bg-orange-600 text-white rounded-lg font-medium hover:bg-orange-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2"
             >
               Track Your Order
             </Link>
           )}
           <Link
-            href={`/table/${params.tableId}/menu`}
+            href={`/table/${tableId}/menu`}
             className="block w-full py-3 px-6 bg-gray-100 text-gray-900 rounded-lg font-medium hover:bg-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
           >
             Order More Items
           </Link>
           <Link
-            href={`/table/${params.tableId}/orders`}
+            href={`/table/${tableId}/orders`}
             className="block w-full py-3 px-6 bg-white border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
           >
             📋 View Full Bill

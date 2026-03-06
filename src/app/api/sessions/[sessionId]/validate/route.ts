@@ -5,12 +5,13 @@ import { getSessionId, getStaffFromRequest } from '@/lib/middleware-helpers';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { sessionId } = await params;
     // Verify requester owns this session or is authenticated staff
     const requestSessionId = getSessionId(request);
-    const isOwner = requestSessionId === params.sessionId;
+    const isOwner = requestSessionId === sessionId;
     if (!isOwner) {
       const staff = await getStaffFromRequest(request);
       if (!staff) {
@@ -18,7 +19,7 @@ export async function GET(
       }
     }
     const session = await prisma.session.findUnique({
-      where: { id: params.sessionId },
+      where: { id: sessionId },
       select: {
         id: true,
         status: true,
@@ -36,7 +37,7 @@ export async function GET(
     if (session.status === 'ACTIVE' && new Date() > session.expiresAt) {
       await prisma.$transaction(async (tx) => {
         await tx.session.update({
-          where: { id: params.sessionId },
+          where: { id: sessionId },
           data: { status: 'EXPIRED', completedAt: new Date() },
         });
         await tx.table.update({

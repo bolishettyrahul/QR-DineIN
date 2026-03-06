@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useCart } from '@/hooks/useCart';
 import { formatCurrency, generateIdempotencyKey } from '@/lib/utils';
 import { Button } from '@/components/Button';
 
-export default function CartPage({ params }: { params: { tableId: string } }) {
+export default function CartPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const router = useRouter();
-  const { items, updateQuantity, updateNotes, removeItem, clearCart, subtotal } = useCart(params.tableId);
+  const { items, updateQuantity, updateNotes, removeItem, clearCart, subtotal } = useCart(tableId);
   const [specialNotes, setSpecialNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -55,7 +56,7 @@ export default function CartPage({ params }: { params: { tableId: string } }) {
       }
 
       clearCart();
-      router.push(`/table/${params.tableId}/order-status?orderId=${data.data.id}`);
+      router.push(`/table/${tableId}/order-status?orderId=${data.data.id}`);
     } catch {
       setError('Unable to place order. Please try again.');
     } finally {
@@ -71,7 +72,7 @@ export default function CartPage({ params }: { params: { tableId: string } }) {
           <h2 className="text-2xl font-bold text-stone-900 mb-3 tracking-tight">Your cart is empty</h2>
           <p className="text-stone-500 mb-8 font-medium">Add items from the menu to get started.</p>
           <Link
-            href={`/table/${params.tableId}/menu`}
+            href={`/table/${tableId}/menu`}
             className="inline-block py-4 px-8 bg-stone-900 text-white rounded-2xl font-bold hover:bg-stone-800 transition-all active:scale-[0.98] shadow-elegant tracking-wide"
           >
             Browse Menu
@@ -87,7 +88,7 @@ export default function CartPage({ params }: { params: { tableId: string } }) {
       <header className="bg-white/90 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.02)] sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between border-b border-stone-100">
           <div className="flex items-center gap-4">
-            <Link href={`/table/${params.tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100 font-bold active:scale-95">
+            <Link href={`/table/${tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100 font-bold active:scale-95">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             </Link>
             <h1 className="text-2xl font-black tracking-tight">Your Cart</h1>

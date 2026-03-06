@@ -9,9 +9,10 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   try {
+    const { orderId } = await params;
     // Only authenticated staff can update order status
     const { error, staff } = await requireAuth(request, ['ADMIN', 'KITCHEN']);
     if (error) return error;
@@ -27,7 +28,7 @@ export async function PATCH(
     const staffId = staff!.staffId;
 
     const order = await prisma.order.findUnique({
-      where: { id: params.orderId },
+      where: { id: orderId },
     });
 
     if (!order) {
@@ -47,7 +48,7 @@ export async function PATCH(
     const updated = await prisma.$transaction(async (tx) => {
       // Update order status
       const updatedOrder = await tx.order.update({
-        where: { id: params.orderId },
+        where: { id: orderId },
         data: { status: newStatus },
         include: {
           items: true,
@@ -59,7 +60,7 @@ export async function PATCH(
       // Log status change
       await tx.orderStatusLog.create({
         data: {
-          orderId: params.orderId,
+          orderId: orderId,
           fromStatus: order.status,
           toStatus: newStatus,
           changedBy: staffId,
@@ -86,7 +87,7 @@ export async function PATCH(
         const pendingOrders = await tx.order.count({
           where: {
             sessionId: order.sessionId,
-            id: { not: params.orderId },
+            id: { not: orderId },
             status: { notIn: ['COMPLETED', 'CANCELLED'] },
           },
         });

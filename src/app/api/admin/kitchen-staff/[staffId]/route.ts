@@ -7,14 +7,15 @@ export const dynamic = 'force-dynamic';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { staffId: string } }
+  { params }: { params: Promise<{ staffId: string }> }
 ) {
   try {
+    const { staffId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
 
     const staff = await prisma.staff.findUnique({
-      where: { id: params.staffId, role: 'KITCHEN' },
+      where: { id: staffId, role: 'KITCHEN' },
     });
 
     if (!staff) {
@@ -23,7 +24,7 @@ export async function DELETE(
 
     // Soft deactivate
     await prisma.staff.update({
-      where: { id: params.staffId },
+      where: { id: staffId },
       data: { isActive: false },
     });
 

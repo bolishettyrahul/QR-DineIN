@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+    const { itemId } = await params;
     const item = await prisma.menuItem.findUnique({
-      where: { id: params.itemId, isActive: true },
+      where: { id: itemId, isActive: true },
       include: {
         category: { select: { id: true, name: true } },
       },
@@ -31,9 +32,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+    const { itemId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
 
@@ -45,7 +47,7 @@ export async function PATCH(
     }
 
     const item = await prisma.menuItem.findUnique({
-      where: { id: params.itemId },
+      where: { id: itemId },
     });
 
     if (!item) {
@@ -53,7 +55,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.menuItem.update({
-      where: { id: params.itemId },
+      where: { id: itemId },
       data: parsed.data,
       include: {
         category: { select: { id: true, name: true } },
@@ -69,14 +71,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { itemId: string } }
+  { params }: { params: Promise<{ itemId: string }> }
 ) {
   try {
+    const { itemId } = await params;
     const { error: authError } = await requireAuth(request, ['ADMIN']);
     if (authError) return authError;
 
     const item = await prisma.menuItem.findUnique({
-      where: { id: params.itemId },
+      where: { id: itemId },
     });
 
     if (!item) {
@@ -85,7 +88,7 @@ export async function DELETE(
 
     // Soft delete
     await prisma.menuItem.update({
-      where: { id: params.itemId },
+      where: { id: itemId },
       data: { isActive: false },
     });
 

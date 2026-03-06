@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import Link from 'next/link';
@@ -11,7 +12,8 @@ import { OrderCardSkeleton } from '@/components/Skeleton';
 
 const STEPS = ['PLACED', 'CONFIRMED', 'PREPARING', 'READY', 'COMPLETED'];
 
-export default function OrderStatusPage({ params }: { params: { tableId: string } }) {
+export default function OrderStatusPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
 
@@ -54,7 +56,7 @@ export default function OrderStatusPage({ params }: { params: { tableId: string 
           <div className="text-6xl mb-6 grayscale opacity-80 mix-blend-multiply" aria-hidden="true">🍽️</div>
           <h2 className="text-[22px] font-black tracking-tight text-stone-900 mb-3">Order not found</h2>
           <Link
-            href={`/table/${params.tableId}/menu`}
+            href={`/table/${tableId}/menu`}
             className="inline-block py-4 px-8 bg-[#ea580c] text-white rounded-[16px] text-[15px] font-bold hover:bg-[#d94a06] transition-all shadow-elegant"
           >
             Go to menu
@@ -72,7 +74,7 @@ export default function OrderStatusPage({ params }: { params: { tableId: string 
       <header className="bg-white/95 backdrop-blur-md shadow-[0_2px_15px_rgba(0,0,0,0.03)] sticky top-0 z-40 border-b border-stone-100/80">
         <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href={`/table/${params.tableId}/orders`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-50 font-bold active:scale-95">
+            <Link href={`/table/${tableId}/orders`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-50 font-bold active:scale-95">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             </Link>
             <div>
@@ -210,7 +212,7 @@ export default function OrderStatusPage({ params }: { params: { tableId: string 
             </div>
           ) : order.status !== 'CANCELLED' && !order.payment ? (
             <Link
-              href={`/table/${params.tableId}/checkout?orderId=${order.id}`}
+              href={`/table/${tableId}/checkout?orderId=${order.id}`}
               className="group flex w-full items-center justify-between px-6 py-4 bg-stone-900 hover:bg-stone-800 text-white rounded-[16px] shadow-elegant outline-none focus-visible:ring-4 focus-visible:ring-stone-500/50 active:scale-[0.98] transition-all"
             >
               <span className="font-bold text-[16px] tracking-wide">Pay Now</span>
@@ -220,13 +222,13 @@ export default function OrderStatusPage({ params }: { params: { tableId: string 
 
           <div className="flex gap-3">
             <Link
-              href={`/table/${params.tableId}/menu`}
+              href={`/table/${tableId}/menu`}
               className="flex-1 text-center py-4 bg-white border border-stone-200 text-stone-700 font-bold rounded-[16px] hover:bg-stone-50 transition-colors active:scale-[0.98] text-[15px]"
             >
               Order More
             </Link>
             <Link
-              href={`/table/${params.tableId}/orders`}
+              href={`/table/${tableId}/orders`}
               className="flex-1 text-center py-4 bg-white border border-stone-200 text-stone-700 font-bold rounded-[16px] hover:bg-stone-50 transition-colors active:scale-[0.98] text-[15px]"
             >
               All Orders

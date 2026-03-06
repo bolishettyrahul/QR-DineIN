@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import useSWR from 'swr';
@@ -14,7 +14,8 @@ const PAYMENT_METHODS = [
   { value: 'PAY_AT_COUNTER', label: 'Pay at Counter', description: 'Pay at the billing counter' },
 ] as const;
 
-export default function CheckoutPage({ params }: { params: { tableId: string } }) {
+export default function CheckoutPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
@@ -60,13 +61,13 @@ export default function CheckoutPage({ params }: { params: { tableId: string } }
 
       // For CASH and PAY_AT_COUNTER, redirect to thank you page
       if (selectedMethod === 'CASH' || selectedMethod === 'PAY_AT_COUNTER') {
-        router.push(`/table/${params.tableId}/thank-you?orderId=${orderId}&method=${selectedMethod}`);
+        router.push(`/table/${tableId}/thank-you?orderId=${orderId}&method=${selectedMethod}`);
         return;
       }
 
       // For UPI — redirect to thank you page with pending status
       // In production, the payment gateway webhook will call /api/payments/verify
-      router.push(`/table/${params.tableId}/thank-you?orderId=${orderId}&method=UPI`);
+      router.push(`/table/${tableId}/thank-you?orderId=${orderId}&method=UPI`);
     } catch {
       setError('Unable to process payment. Please try again.');
     } finally {
@@ -79,7 +80,7 @@ export default function CheckoutPage({ params }: { params: { tableId: string } }
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 mb-4">{orderError ? 'Failed to load order' : 'No order found'}</p>
-          <Link href={`/table/${params.tableId}/menu`} className="text-orange-600 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded">
+          <Link href={`/table/${tableId}/menu`} className="text-orange-600 font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 rounded">
             Go Back
           </Link>
         </div>

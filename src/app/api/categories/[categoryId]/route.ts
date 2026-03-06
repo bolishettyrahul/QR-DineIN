@@ -8,9 +8,10 @@ export const dynamic = 'force-dynamic';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { categoryId: string } }
+  { params }: { params: Promise<{ categoryId: string }> }
 ) {
   try {
+    const { categoryId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
 
@@ -22,7 +23,7 @@ export async function PATCH(
     }
 
     const category = await prisma.category.findUnique({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
     });
 
     if (!category) {
@@ -30,7 +31,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.category.update({
-      where: { id: params.categoryId },
+      where: { id: categoryId },
       data: parsed.data,
     });
 

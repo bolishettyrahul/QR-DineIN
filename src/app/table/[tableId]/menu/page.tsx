@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, startTransition } from 'react';
+import { useState, useEffect, useRef, startTransition, use } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -129,7 +129,8 @@ function CategorySection({
   );
 }
 
-export default function MenuPage({ params }: { params: { tableId: string } }) {
+export default function MenuPage({ params }: { params: Promise<{ tableId: string }> }) {
+  const { tableId } = use(params);
   const { data: menuData, isLoading, mutate: refreshMenu } = useSWR<MenuCategory[]>('/api/menu', swrFetcher, {
     revalidateOnFocus: true,
     refreshInterval: 10000,
@@ -139,7 +140,7 @@ export default function MenuPage({ params }: { params: { tableId: string } }) {
   useRealtimeSubscription('guest-menu', 'MenuItem', '*', () => {
     refreshMenu();
   });
-  const { items: cartItems, addItem, updateQuantity, totalItems, subtotal } = useCart(params.tableId);
+  const { items: cartItems, addItem, updateQuantity, totalItems, subtotal } = useCart(tableId);
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [vegOnly, setVegOnly] = useState(false);
   const isClickingRef = useRef(false);
@@ -216,7 +217,7 @@ export default function MenuPage({ params }: { params: { tableId: string } }) {
             <div>
               <h1 className="text-2xl font-black tracking-tight text-stone-900">QR-Dine</h1>
               <p className="text-[11px] font-bold text-stone-400 mt-0.5 uppercase tracking-widest">
-                Table {params.tableId.slice(0, 6)}
+                Table {tableId.slice(0, 6)}
               </p>
             </div>
 
@@ -237,7 +238,7 @@ export default function MenuPage({ params }: { params: { tableId: string } }) {
               </label>
 
               <Link
-                href={`/table/${params.tableId}/orders`}
+                href={`/table/${tableId}/orders`}
                 className="flex items-center gap-1.5 text-sm font-bold text-stone-600 hover:text-stone-900 transition-colors bg-stone-100 hover:bg-stone-200 px-4 py-2 rounded-full active:scale-95"
               >
                 <span>📋</span> Orders
@@ -316,7 +317,7 @@ export default function MenuPage({ params }: { params: { tableId: string } }) {
         <div className="fixed bottom-0 left-0 right-0 p-5 md:p-8 bg-gradient-to-t from-[#FCFBFA] via-[#FCFBFA]/90 to-transparent z-50 pointer-events-none pb-safe">
           <div className="max-w-7xl mx-auto flex md:justify-end pointer-events-auto">
             <Link
-              href={`/table/${params.tableId}/cart`}
+              href={`/table/${tableId}/cart`}
               className="group flex-1 md:flex-none md:w-[320px] bg-stone-900 text-white rounded-[20px] p-2 pr-5 shadow-[0_20px_40px_rgba(0,0,0,0.2)] flex items-center justify-between outline-none focus-visible:ring-4 focus-visible:ring-stone-500/50 active:scale-[0.98] transition-all hover:-translate-y-1"
             >
               <div className="flex items-center gap-3">

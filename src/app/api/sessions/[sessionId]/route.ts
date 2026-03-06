@@ -8,13 +8,14 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 
 ) {
   try {
+    const { sessionId } = await params;
     // Allow access if the requester owns this session (cookie) or is authenticated staff
     const requestSessionId = getSessionId(request);
-    const isOwner = requestSessionId === params.sessionId;
+    const isOwner = requestSessionId === sessionId;
 
     if (!isOwner) {
       const { error } = await requireAuth(request, ['ADMIN', 'KITCHEN']);
@@ -22,7 +23,7 @@ export async function GET(
     }
 
     const session = await prisma.session.findUnique({
-      where: { id: params.sessionId },
+      where: { id: sessionId },
       include: {
         table: { select: { id: true, number: true, label: true } },
         orders: {
@@ -43,7 +44,7 @@ export async function GET(
     if (session.status === 'ACTIVE' && new Date() > session.expiresAt) {
       await prisma.$transaction(async (tx) => {
         await tx.session.update({
-          where: { id: params.sessionId },
+          where: { id: sessionId },
           data: { status: 'EXPIRED', completedAt: new Date() },
         });
         await tx.table.update({
@@ -64,9 +65,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
+    const { sessionId } = await params;
     // Only admin can update sessions (close, expire, cancel)
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
@@ -79,7 +81,7 @@ export async function PATCH(
     }
 
     const session = await prisma.session.findUnique({
-      where: { id: params.sessionId },
+      where: { id: sessionId },
     });
 
     if (!session) {
@@ -88,7 +90,7 @@ export async function PATCH(
 
     const updated = await prisma.$transaction(async (tx) => {
       const updatedSession = await tx.session.update({
-        where: { id: params.sessionId },
+        where: { id: sessionId },
         data: {
           status: parsed.data.status,
           completedAt: ['COMPLETED', 'EXPIRED', 'CANCELLED'].includes(parsed.data.status)

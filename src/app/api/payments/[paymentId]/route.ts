@@ -7,11 +7,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { paymentId: string } }
+  { params }: { params: Promise<{ paymentId: string }> }
 ) {
   try {
+    const { paymentId } = await params;
     const payment = await prisma.payment.findUnique({
-      where: { id: params.paymentId },
+      where: { id: paymentId },
       include: {
         order: {
           select: { id: true, orderNumber: true, totalAmount: true, status: true },

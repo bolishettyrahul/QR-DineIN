@@ -6,13 +6,14 @@ import { requireAuth } from '@/lib/middleware-helpers';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
     const table = await prisma.table.findUnique({
-      where: { id: params.tableId, isActive: true },
+      where: { id: tableId, isActive: true },
     });
 
     if (!table) {
@@ -34,7 +35,7 @@ export async function GET(
 
     // Save QR code URL to table
     await prisma.table.update({
-      where: { id: params.tableId },
+      where: { id: tableId },
       data: { qrCodeUrl: qrDataUrl },
     });
 

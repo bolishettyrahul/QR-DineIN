@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import useSWR from 'swr';
 import Link from 'next/link';
 import { swrFetcher } from '@/hooks/useRealtime';
@@ -45,7 +46,8 @@ function getSessionId(): string | null {
     }
 }
 
-export default function MyOrdersPage({ params }: { params: { tableId: string } }) {
+export default function MyOrdersPage({ params }: { params: Promise<{ tableId: string }> }) {
+    const { tableId } = use(params);
     const sessionId = getSessionId();
 
     const { data: session, isLoading } = useSWR<SessionData>(
@@ -78,7 +80,7 @@ export default function MyOrdersPage({ params }: { params: { tableId: string } }
             <div className="min-h-screen bg-stone-50">
                 <header className="bg-white shadow-sm sticky top-0 z-40">
                     <div className="max-w-lg mx-auto px-5 py-4 flex items-center gap-4 border-b border-stone-100">
-                        <Link href={`/table/${params.tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100">
+                        <Link href={`/table/${tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-100">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         </Link>
                         <h1 className="text-2xl font-bold text-stone-900 tracking-tight">My Orders</h1>
@@ -99,7 +101,7 @@ export default function MyOrdersPage({ params }: { params: { tableId: string } }
             <header className="bg-white/95 backdrop-blur-md shadow-[0_2px_15px_rgba(0,0,0,0.03)] sticky top-0 z-40 border-b border-stone-100/80">
                 <div className="max-w-2xl mx-auto px-5 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href={`/table/${params.tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-50 font-bold active:scale-95">
+                        <Link href={`/table/${tableId}/menu`} className="text-stone-400 hover:text-stone-900 transition-colors flex items-center justify-center w-8 h-8 rounded-full hover:bg-stone-50 font-bold active:scale-95">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                         </Link>
                         <div>
@@ -119,7 +121,7 @@ export default function MyOrdersPage({ params }: { params: { tableId: string } }
                         <h2 className="text-[22px] font-black tracking-tight mb-2">No orders yet</h2>
                         <p className="text-[15px] font-medium text-stone-500 mb-8">Your orders will appear here.</p>
                         <Link
-                            href={`/table/${params.tableId}/menu`}
+                            href={`/table/${tableId}/menu`}
                             className="inline-block py-4 px-8 bg-stone-900 text-white rounded-[16px] text-[15px] font-bold hover:bg-stone-800 transition-all active:scale-[0.98] shadow-elegant tracking-wide"
                         >
                             Browse Menu
@@ -187,7 +189,7 @@ export default function MyOrdersPage({ params }: { params: { tableId: string } }
                                     {/* Link to track individual order */}
                                     {order.status !== 'CANCELLED' && order.status !== 'COMPLETED' && (
                                         <Link
-                                            href={`/table/${params.tableId}/order-status?orderId=${order.id}`}
+                                            href={`/table/${tableId}/order-status?orderId=${order.id}`}
                                             className="w-full sm:w-auto text-center px-6 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold rounded-[14px] text-[14px] transition-colors active:scale-95"
                                         >
                                             <span className="flex items-center gap-1 justify-center">Track Order <svg className="w-4 h-4 ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></span>
@@ -231,7 +233,7 @@ export default function MyOrdersPage({ params }: { params: { tableId: string } }
             <div className="fixed bottom-0 left-0 right-0 p-5 md:p-8 bg-gradient-to-t from-[#FCFBFA] via-[#FCFBFA]/90 to-transparent z-50 pointer-events-none pb-safe">
                 <div className="max-w-2xl mx-auto pointer-events-auto animate-fade-in-up flex justify-center md:justify-end">
                     <Link
-                        href={`/table/${params.tableId}/menu`}
+                        href={`/table/${tableId}/menu`}
                         className="group flex-1 md:flex-none md:w-[280px] flex items-center justify-between px-6 py-4 bg-[#ea580c] hover:bg-[#d94a06] text-white rounded-[16px] shadow-[0_10px_25px_rgba(234,88,12,0.3)] outline-none focus-visible:ring-4 focus-visible:ring-orange-500/50 active:scale-[0.98] transition-all font-bold text-[16px] tracking-wide"
                     >
                         <span>Order More</span>

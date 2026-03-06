@@ -11,14 +11,15 @@ export const dynamic = 'force-dynamic';
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
 
     const sessions = await prisma.session.findMany({
-      where: { tableId: params.tableId },
+      where: { tableId: tableId },
       select: {
         id: true,
         status: true,

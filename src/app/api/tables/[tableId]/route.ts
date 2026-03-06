@@ -8,11 +8,12 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
     const table = await prisma.table.findUnique({
-      where: { id: params.tableId, isActive: true },
+      where: { id: tableId, isActive: true },
       include: {
         sessions: {
           where: { status: 'ACTIVE' },
@@ -39,9 +40,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
     const { error } = await requireAuth(request, ['ADMIN']);
     if (error) return error;
 
@@ -53,7 +55,7 @@ export async function PATCH(
     }
 
     const table = await prisma.table.findUnique({
-      where: { id: params.tableId },
+      where: { id: tableId },
     });
 
     if (!table) {
@@ -61,7 +63,7 @@ export async function PATCH(
     }
 
     const updated = await prisma.table.update({
-      where: { id: params.tableId },
+      where: { id: tableId },
       data: parsed.data,
     });
 
@@ -74,14 +76,15 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { tableId: string } }
+  { params }: { params: Promise<{ tableId: string }> }
 ) {
   try {
+    const { tableId } = await params;
     const { error: authError } = await requireAuth(request, ['ADMIN']);
     if (authError) return authError;
 
     const table = await prisma.table.findUnique({
-      where: { id: params.tableId },
+      where: { id: tableId },
     });
 
     if (!table) {
@@ -90,7 +93,7 @@ export async function DELETE(
 
     // Soft delete
     await prisma.table.update({
-      where: { id: params.tableId },
+      where: { id: tableId },
       data: { isActive: false },
     });
 
